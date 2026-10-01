@@ -21,6 +21,8 @@ interface CreateVehicleInput {
   vehicle_class?: string;
   home_city?: string;
   home_country?: string;
+  start_date?: string | null;
+  end_date?: string | null;
 }
 
 export const useCreateVehicle = () => {
@@ -61,6 +63,8 @@ interface UpdateVehicleInput {
   vehicle_class?: string;
   home_city?: string | null;
   home_country?: string | null;
+  start_date?: string | null;
+  end_date?: string | null;
 }
 
 export const useUpdateVehicle = () => {

@@ -28,7 +28,6 @@ export const useStorefrontVehicles = (agencyId: string | undefined) => {
         .from('vehicles')
         .select(`${baseCols}, daily_rate_base`)
         .eq('agency_id', agencyId!)
-        .eq('status', 'available')
         .order('created_at', { ascending: false });
 
       if (res.error?.code === '42703') {
@@ -36,7 +35,6 @@ export const useStorefrontVehicles = (agencyId: string | undefined) => {
           .from('vehicles')
           .select(baseCols)
           .eq('agency_id', agencyId!)
-          .eq('status', 'available')
           .order('created_at', { ascending: false });
       }
 

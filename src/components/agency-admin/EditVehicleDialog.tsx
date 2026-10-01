@@ -30,6 +30,8 @@ const EditVehicleDialog = ({ vehicle, open, onOpenChange }: EditVehicleDialogPro
   const [vehicleClass, setVehicleClass] = useState('economy');
   const [homeCity, setHomeCity] = useState('');
   const [homeCountry, setHomeCountry] = useState('');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
 
   const updateVehicle = useUpdateVehicle();
 
@@ -50,6 +52,8 @@ const EditVehicleDialog = ({ vehicle, open, onOpenChange }: EditVehicleDialogPro
       setVehicleClass((vehicle as any).vehicle_class ?? 'economy');
       setHomeCity((vehicle as any).home_city ?? '');
       setHomeCountry((vehicle as any).home_country ?? '');
+      setStartDate((vehicle as any).start_date ?? '');
+      setEndDate((vehicle as any).end_date ?? '');
     }
   }, [vehicle]);
 
@@ -70,6 +74,8 @@ const EditVehicleDialog = ({ vehicle, open, onOpenChange }: EditVehicleDialogPro
         vehicle_class: vehicleClass,
         home_city: homeCity || null,
         home_country: homeCountry || null,
+        start_date: startDate || null,
+        end_date: endDate || null,
       },
       { onSuccess: () => onOpenChange(false) }
     );
@@ -209,6 +215,16 @@ const EditVehicleDialog = ({ vehicle, open, onOpenChange }: EditVehicleDialogPro
             <div className="space-y-2">
               <Label htmlFor="editHomeCountry">Location (Country) *</Label>
               <Input id="editHomeCountry" value={homeCountry} onChange={(e) => setHomeCountry(e.target.value)} placeholder="Turkey" required />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="editStartDate">Start Date</Label>
+              <Input id="editStartDate" type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="editEndDate">End Date</Label>
+              <Input id="editEndDate" type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
             </div>
           </div>
           <p className="text-xs text-muted-foreground">Used to calculate drop-off fees based on distance from the vehicle's home location.</p>

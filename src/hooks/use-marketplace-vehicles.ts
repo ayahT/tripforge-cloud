@@ -40,16 +40,14 @@ export const useMarketplaceVehicles = (currentAgencyId: string | undefined, comm
       
       let res: any = await supabase
         .from('vehicles')
-        .select(`${baseCols}, daily_rate_base, agency_id, agencies!inner(name, slug, logo_url, commission_rate, one_way_fee, city, country, storefront_config)`)
-        .eq('status', 'available')
+        .select(`${baseCols}, daily_rate_base, agency_id, agencies!vehicles_agency_id_fkey!inner(name, slug, logo_url, commission_rate, one_way_fee, city, country, storefront_config)`)
         .order('created_at', { ascending: false });
 
       // Fallback if new columns don't exist yet
       if (res.error?.code === '42703') {
         res = await supabase
           .from('vehicles')
-          .select(`${baseCols}, agency_id, agencies!inner(name, slug, logo_url, commission_rate)`)
-          .eq('status', 'available')
+          .select(`${baseCols}, agency_id, agencies!vehicles_agency_id_fkey!inner(name, slug, logo_url, commission_rate)`)
           .order('created_at', { ascending: false });
       }
 

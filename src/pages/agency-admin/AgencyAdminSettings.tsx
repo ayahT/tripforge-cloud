@@ -1,10 +1,9 @@
-import { useState, useRef, useMemo, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useOutletContext } from 'react-router-dom';
-import { Agency, SERVICE_LABELS, ServiceType, StorefrontPage, PAGE_LABELS, PageSeo, PageSeoEntry, StorefrontTemplate, StorefrontConfig } from '@/types/agency';
+import { Agency, StorefrontPage, PAGE_LABELS, PageSeo, PageSeoEntry, StorefrontTemplate, StorefrontConfig } from '@/types/agency';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useUpdateAgency } from '@/hooks/use-agency-mutations';
 import { useAgencyImageUpload } from '@/hooks/use-agency-image-upload';
@@ -12,12 +11,10 @@ import { Upload, Image, Check, Loader2 } from 'lucide-react';
 import TemplatePicker from '@/components/agency-admin/TemplatePicker';
 import StorefrontConfigEditor from '@/components/agency-admin/StorefrontConfigEditor';
 import PageContentEditor from '@/components/agency-admin/PageContentEditor';
-import ServicePricingEditor from '@/components/agency-admin/ServicePricingEditor';
 import { COUNTRY_LIST } from '@/lib/country-utils';
 import { getCitiesForCountry } from '@/data/city-database';
 import { getTemplateStyles } from '@/lib/template-styles';
 
-const serviceOptions: ServiceType[] = ['car_rental', 'apartment', 'transfer', 'limo_tour', 'city_tour'];
 const seoPages: StorefrontPage[] = ['home', 'fleet', 'contact', 'about'];
 const DEFAULT_TRANSFER_DISTANCE_TIERS = [
   { from_km: 0, to_km: 50, multiplier: 1.0 },
@@ -421,20 +418,6 @@ const AgencyAdminSettings = () => {
           <Input id="domain" value={form.domain} onChange={(e) => setForm((f) => ({ ...f, domain: e.target.value }))} placeholder="www.your-agency.com" />
         </div>
 
-        <div className="space-y-3">
-          <Label>Services</Label>
-          <div className="grid grid-cols-2 gap-3">
-            {serviceOptions.map((service) => (
-              <label key={service} className="flex items-center gap-2.5 cursor-pointer rounded-lg border border-border p-3 hover:bg-secondary/40 transition-colors">
-                <Checkbox checked={form.services.includes(service)} onCheckedChange={() => toggleService(service)} />
-                <span className="text-sm text-foreground">{SERVICE_LABELS[service]}</span>
-              </label>
-            ))}
-          </div>
-        </div>
-
-        {/* Service Pricing — nested under Services */}
-        <ServicePricingEditor agencyId={agency.id} enabledServices={form.services} storefrontConfig={storefrontConfig} onConfigChange={setStorefrontConfig} country={form.country} />
       </motion.div>
 
       {/* Per-Page SEO Settings */}

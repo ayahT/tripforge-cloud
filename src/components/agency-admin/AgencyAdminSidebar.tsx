@@ -1,17 +1,15 @@
 import { NavLink, useLocation, useParams } from 'react-router-dom';
 import {
-  LayoutDashboard,
-  CalendarDays,
-  Settings,
   Car,
+  BookOpen,
+  CalendarDays,
+  Users,
+  Tags,
+  UserCog,
+  Settings,
   LogOut,
   ChevronRight,
-  BarChart3,
-  Users,
   ExternalLink,
-  Building,
-  Mail,
-  MapPin,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
@@ -28,16 +26,12 @@ const AgencyAdminSidebar = ({ agency }: AgencyAdminSidebarProps) => {
 
   const base = `/agency/${slug}/admin`;
 
-  const hasApartments = agency?.services?.includes('apartment');
   const navItems = [
-    { to: base, icon: LayoutDashboard, label: 'Dashboard', exact: true },
-    { to: `${base}/bookings`, icon: CalendarDays, label: 'Bookings' },
-    { to: `${base}/messages`, icon: Mail, label: 'Messages' },
-    { to: `${base}/drivers`, icon: Users, label: 'Drivers' },
-    { to: `${base}/live-map`, icon: MapPin, label: 'Live Map' },
-    { to: `${base}/vehicles`, icon: Car, label: 'Vehicles' },
-    ...(hasApartments ? [{ to: `${base}/apartments`, icon: Building, label: 'Apartments' }] : []),
-    { to: `${base}/analytics`, icon: BarChart3, label: 'Analytics' },
+    { to: `${base}/fleet`, icon: Car, label: 'Fleet' },
+    { to: `${base}/reservations`, icon: BookOpen, label: 'Reservations' },
+    { to: `${base}/calendar`, icon: CalendarDays, label: 'Calendar' },
+    { to: `${base}/services-pricing`, icon: Tags, label: 'Services & Pricing' },
+    { to: `${base}/drivers`, icon: UserCog, label: 'Drivers' },
     { to: `${base}/settings`, icon: Settings, label: 'Settings' },
   ];
 
@@ -70,9 +64,7 @@ const AgencyAdminSidebar = ({ agency }: AgencyAdminSidebarProps) => {
           Management
         </p>
         {navItems.map((item) => {
-          const isActive = item.exact
-            ? location.pathname === item.to
-            : location.pathname.startsWith(item.to);
+          const isActive = location.pathname.startsWith(item.to);
 
           return (
             <NavLink

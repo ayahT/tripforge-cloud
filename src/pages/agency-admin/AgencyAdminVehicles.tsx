@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Car, Search, Circle, Hash, KeyRound, Pencil, Sparkles } from 'lucide-react';
+import { Car, Search, Circle, Hash, KeyRound, Pencil, Sparkles, MapPin } from 'lucide-react';
 import { Agency } from '@/types/agency';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -39,19 +39,7 @@ const AgencyAdminVehicles = () => {
   const [seeding, setSeeding] = useState(false);
   const qc = useQueryClient();
 
-  const { data: reservations = [] } = useQuery({
-    queryKey: ['agency-bookings', agency.id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('bookings')
-        .select('id, customer_name, pickup_date, return_date, status, vehicle_id')
-        .eq('agency_id', agency.id)
-        .not('vehicle_id', 'is', null)
-        .order('pickup_date', { ascending: true });
-      if (error) throw error;
-      return data ?? [];
-    },
-  });
+
 
   const handleSeed = async () => {
     setSeeding(true);
@@ -92,31 +80,6 @@ const AgencyAdminVehicles = () => {
         </div>
       </motion.div>
 
-      {/* Fleet-wide reservations calendar */}
-      <motion.div
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
-        className="card-premium rounded-xl p-5"
-      >
-        <FleetReservationTimeline
-          title="Fleet Reservations"
-          emptyLabel="No vehicles to display."
-          rows={vehicles.map((v) => ({
-            id: v.id,
-            title: `${v.brand} ${v.model}`,
-            subtitle: v.license_plate ?? v.serial_number ?? '',
-          }))}
-          reservations={(reservations as any[]).map((r) => ({
-            id: r.id,
-            customer_name: r.customer_name,
-            pickup_date: r.pickup_date,
-            return_date: r.return_date,
-            status: r.status,
-            resource_id: r.vehicle_id,
-          }))}
-        />
-      </motion.div>
 
       {/* Search */}
       <div className="relative group max-w-sm">
@@ -204,6 +167,12 @@ const AgencyAdminVehicles = () => {
                       <div className="flex items-center gap-2.5 text-muted-foreground">
                         <KeyRound className="h-3.5 w-3.5 shrink-0" />
                         <span className="truncate text-xs">{vehicle.vin}</span>
+                      </div>
+                    )}
+                    {vehicle.current_location && (
+                      <div className="flex items-center gap-2.5 text-muted-foreground">
+                        <MapPin className="h-3.5 w-3.5 shrink-0" />
+                        <span className="truncate text-xs font-medium">{vehicle.current_location}</span>
                       </div>
                     )}
                   </div>

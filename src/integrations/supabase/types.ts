@@ -14,6 +14,35 @@ export type Database = {
   }
   public: {
     Tables: {
+      services: {
+        Row: {
+          id: string
+          name: string
+          slug: string
+          description: string | null
+          icon: string | null
+          active: boolean | null
+          created_at: string | null
+        }
+        Insert: {
+          id?: string
+          name: string
+          slug: string
+          description?: string | null
+          icon?: string | null
+          active?: boolean | null
+          created_at?: string | null
+        }
+        Update: {
+          id?: string
+          name?: string
+          slug?: string
+          description?: string | null
+          icon?: string | null
+          active?: boolean | null
+          created_at?: string | null
+        }
+      }
       agencies: {
         Row: {
           background_color: string | null
@@ -751,6 +780,36 @@ export type Database = {
             referencedRelation: "vehicles"
             referencedColumns: ["id"]
           },
+        ]
+      }
+      vehicle_agency_assignments: {
+        Row: {
+          vehicle_id: string
+          agency_id: string
+        }
+        Insert: {
+          vehicle_id: string
+          agency_id: string
+        }
+        Update: {
+          vehicle_id?: string
+          agency_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vehicle_agency_assignments_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "agencies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vehicle_agency_assignments_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          }
         ]
       }
       vehicles: {

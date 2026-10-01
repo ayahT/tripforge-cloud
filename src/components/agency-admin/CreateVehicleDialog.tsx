@@ -32,6 +32,8 @@ const CreateVehicleDialog = ({ agencyId }: Props) => {
   const [mileagePolicy, setMileagePolicy] = useState('unlimited');
   const [homeCity, setHomeCity] = useState('');
   const [homeCountry, setHomeCountry] = useState('');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
 
   const createVehicle = useCreateVehicle();
   const uploadPhoto = useUploadVehiclePhoto();
@@ -43,6 +45,7 @@ const CreateVehicleDialog = ({ agencyId }: Props) => {
     setCategory('sedan'); setAirConditioning(true); setMileagePolicy('unlimited');
     setVehicleClass('economy');
     setHomeCity(''); setHomeCountry('');
+    setStartDate(''); setEndDate('');
   };
 
   const handleSubmit = async () => {
@@ -71,6 +74,8 @@ const CreateVehicleDialog = ({ agencyId }: Props) => {
       vehicle_class: vehicleClass,
       home_city: homeCity.trim() || undefined,
       home_country: homeCountry.trim() || undefined,
+      start_date: startDate || undefined,
+      end_date: endDate || undefined,
     });
 
     reset();
@@ -225,6 +230,16 @@ const CreateVehicleDialog = ({ agencyId }: Props) => {
             <div className="space-y-1.5">
               <Label htmlFor="homeCountry">Location (Country) *</Label>
               <Input id="homeCountry" value={homeCountry} onChange={(e) => setHomeCountry(e.target.value)} placeholder="Turkey" required />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="startDate">Start Date</Label>
+              <Input id="startDate" type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="endDate">End Date</Label>
+              <Input id="endDate" type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
             </div>
           </div>
           <p className="text-xs text-muted-foreground">Used to calculate drop-off fees based on distance from the vehicle's home location.</p>

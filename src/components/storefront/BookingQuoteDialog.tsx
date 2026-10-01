@@ -11,6 +11,7 @@ import { MarketplaceVehicle } from '@/hooks/use-marketplace-vehicles';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { z } from 'zod';
+import LocationAutocomplete, { getAgencyLocations } from '@/components/storefront/LocationAutocomplete';
 
 const EXTRA_ICONS: Record<string, React.ElementType> = {
   Navigation, Baby, UserPlus, Wifi, Snowflake, Package,
@@ -241,19 +242,57 @@ const BookingQuoteDialog = ({ vehicle, open, onOpenChange, buttonColor, numDays:
                 </div>
                 <div className="space-y-1.5">
                   <Label>Pickup date *</Label>
-                  <Input type="date" min={today} value={customer.pickup_date} onChange={e => setCustomer(c => ({ ...c, pickup_date: e.target.value }))} />
+                  <Input type="date" min={today} value={customer.pickup_date} onChange={e => {
+                    const newPick = e.target.value;
+                    const pick = new Date(newPick);
+                    if (!isNaN(pick.getTime())) {
+                      const ret = new Date(pick.getTime() + numDays * 86400000);
+                      setCustomer(c => ({ ...c, pickup_date: newPick, return_date: ret.toISOString().slice(0, 10) }));
+                    } else {
+                      setCustomer(c => ({ ...c, pickup_date: newPick }));
+                    }
+                  }} />
                 </div>
                 <div className="space-y-1.5">
                   <Label>Return date *</Label>
-                  <Input type="date" min={customer.pickup_date} value={customer.return_date} onChange={e => setCustomer(c => ({ ...c, return_date: e.target.value }))} />
+                  <Input type="date" min={customer.pickup_date} value={customer.return_date} onChange={e => {
+                    const newRet = e.target.value;
+                    const pick = new Date(customer.pickup_date);
+                    const ret = new Date(newRet);
+                    if (!isNaN(pick.getTime()) && !isNaN(ret.getTime())) {
+                      const days = Math.max(1, Math.round((ret.getTime() - pick.getTime()) / 86400000));
+                      setNumDays(days);
+                    }
+                    setCustomer(c => ({ ...c, return_date: newRet }));
+                  }} />
                 </div>
                 <div className="space-y-1.5">
                   <Label>Pickup location</Label>
-                  <Input value={customer.pickup_location} onChange={e => setCustomer(c => ({ ...c, pickup_location: e.target.value }))} placeholder="Airport, hotel, address…" />
+                  <div className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
+                    <LocationAutocomplete
+                      value={customer.pickup_location}
+                      onChange={(val) => setCustomer(c => ({ ...c, pickup_location: val }))}
+                      placeholder="Airport, hotel, address..."
+                      locations={vehicle.home_city ? getAgencyLocations(vehicle.home_city, vehicle.home_country || '') : []}
+                      agencyCity={vehicle.home_city ?? ''}
+                      agencyCountry={vehicle.home_country ?? ''}
+                      accentColor={buttonColor}
+                    />
+                  </div>
                 </div>
                 <div className="space-y-1.5">
                   <Label>Return location</Label>
-                  <Input value={customer.return_location} onChange={e => setCustomer(c => ({ ...c, return_location: e.target.value }))} placeholder="Same as pickup" />
+                  <div className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
+                    <LocationAutocomplete
+                      value={customer.return_location}
+                      onChange={(val) => setCustomer(c => ({ ...c, return_location: val }))}
+                      placeholder="Same as pickup"
+                      locations={vehicle.home_city ? getAgencyLocations(vehicle.home_city, vehicle.home_country || '') : []}
+                      agencyCity={vehicle.home_city ?? ''}
+                      agencyCountry={vehicle.home_country ?? ''}
+                      accentColor={buttonColor}
+                    />
+                  </div>
                 </div>
                 <div className="space-y-1.5 sm:col-span-2">
                   <Label>Notes (optional)</Label>
@@ -287,7 +326,14 @@ const BookingQuoteDialog = ({ vehicle, open, onOpenChange, buttonColor, numDays:
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
                 <Label>Rental days</Label>
-                <Input type="number" min={1} max={365} value={numDays} onChange={e => setNumDays(Math.max(1, parseInt(e.target.value) || 1))} />
+                <Input type="number" min={1} max={365} value={numDays} onChange={e => {
+                  const d = Math.max(1, parseInt(e.target.value) || 1);
+                  setNumDays(d);
+                  const pick = new Date(customer.pickup_date);
+                  if (!isNaN(pick.getTime())) {
+                    setCustomer(c => ({ ...c, return_date: new Date(pick.getTime() + d * 86400000).toISOString().slice(0, 10) }));
+                  }
+                }} />
               </div>
               <div className="space-y-1.5">
                 <Label>Estimated distance (km)</Label>

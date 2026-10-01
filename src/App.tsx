@@ -27,6 +27,8 @@ const AgencyAdminBookings = lazy(() => import("./pages/agency-admin/AgencyAdminB
 const AgencyAdminSettings = lazy(() => import("./pages/agency-admin/AgencyAdminSettings"));
 const AgencyAdminDrivers = lazy(() => import("./pages/agency-admin/AgencyAdminDrivers"));
 const AgencyAdminVehicles = lazy(() => import("./pages/agency-admin/AgencyAdminVehicles"));
+const AgencyAdminCalendar = lazy(() => import("./pages/agency-admin/AgencyAdminCalendar"));
+const AgencyAdminServicesPricing = lazy(() => import("./pages/agency-admin/AgencyAdminServicesPricing"));
 const AgencyAdminApartments = lazy(() => import("./pages/agency-admin/AgencyAdminApartments"));
 const AgencyAdminMessages = lazy(() => import("./pages/agency-admin/AgencyAdminMessages"));
 const AgencyAdminLiveMap = lazy(() => import("./pages/agency-admin/AgencyAdminLiveMap"));
@@ -35,7 +37,10 @@ const DriverDashboard = lazy(() => import("./pages/driver/DriverDashboard"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Agencies = lazy(() => import("./pages/Agencies"));
 const Bookings = lazy(() => import("./pages/Bookings"));
+const Calendar = lazy(() => import("./pages/Calendar"));
+const ServicesPricing = lazy(() => import("./pages/ServicesPricing"));
 const Vehicles = lazy(() => import("./pages/Vehicles"));
+const Assignments = lazy(() => import("./pages/Assignments"));
 const Users = lazy(() => import("./pages/Users"));
 const Analytics = lazy(() => import("./pages/Analytics"));
 const ComingSoon = lazy(() => import("./pages/ComingSoon"));
@@ -74,20 +79,21 @@ const App = () => (
                     <Route path="/" element={<Dashboard />} />
                     <Route path="/agencies" element={<Agencies />} />
                     <Route path="/vehicles" element={<Vehicles />} />
+                    <Route path="/drivers" element={<ComingSoon title="Drivers" />} />
+                    <Route path="/assignments" element={<Assignments />} />
                     <Route path="/bookings" element={<Bookings />} />
-                    <Route path="/users" element={<Users />} />
-                    <Route path="/analytics" element={<Analytics />} />
+                    <Route path="/calendar" element={<Calendar />} />
+                    <Route path="/services-pricing" element={<ServicesPricing />} />
                     <Route path="/settings" element={<ComingSoon title="Settings" />} />
                   </Route>
                   <Route path="/agency/:slug/admin" element={<AgencyAdminLayout />}>
                     <Route index element={<AgencyAdminDashboard />} />
-                    <Route path="bookings" element={<AgencyAdminBookings />} />
+                    <Route path="fleet" element={<AgencyAdminVehicles />} />
+                    <Route path="reservations" element={<AgencyAdminBookings />} />
+                    <Route path="calendar" element={<AgencyAdminCalendar />} />
+                    <Route path="clients" element={<ComingSoon title="Clients" />} />
+                    <Route path="services-pricing" element={<AgencyAdminServicesPricing />} />
                     <Route path="drivers" element={<AgencyAdminDrivers />} />
-                    <Route path="vehicles" element={<AgencyAdminVehicles />} />
-                    <Route path="apartments" element={<AgencyAdminApartments />} />
-                    <Route path="messages" element={<AgencyAdminMessages />} />
-                    <Route path="live-map" element={<AgencyAdminLiveMap />} />
-                    <Route path="analytics" element={<ComingSoon title="Analytics" />} />
                     <Route path="settings" element={<AgencyAdminSettings />} />
                   </Route>
                   <Route path="/agency/:slug" element={<StorefrontLayout />}>

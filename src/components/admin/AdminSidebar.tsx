@@ -1,12 +1,13 @@
 import { NavLink, useLocation } from 'react-router-dom';
 import {
-  LayoutDashboard,
   Building2,
-  Globe,
-  Settings,
-  Users,
-  BarChart3,
   Car,
+  Users,
+  ArrowRightLeft,
+  BookOpen,
+  CalendarDays,
+  Tags,
+  Settings,
   LogOut,
   ChevronRight,
 } from 'lucide-react';
@@ -14,12 +15,13 @@ import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 
 const navItems = [
-  { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
   { to: '/agencies', icon: Building2, label: 'Agencies' },
   { to: '/vehicles', icon: Car, label: 'Vehicles' },
-  { to: '/bookings', icon: Globe, label: 'Bookings' },
-  { to: '/users', icon: Users, label: 'Users' },
-  { to: '/analytics', icon: BarChart3, label: 'Analytics' },
+  { to: '/drivers', icon: Users, label: 'Drivers' },
+  { to: '/assignments', icon: ArrowRightLeft, label: 'Vehicle ↔ Agency Assignment' },
+  { to: '/bookings', icon: BookOpen, label: 'Bookings' },
+  { to: '/calendar', icon: CalendarDays, label: 'Calendar' },
+  { to: '/services-pricing', icon: Tags, label: 'Services' },
   { to: '/settings', icon: Settings, label: 'Settings' },
 ];
 

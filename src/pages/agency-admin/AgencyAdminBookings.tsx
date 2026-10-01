@@ -20,11 +20,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { useQueryClient } from '@tanstack/react-query';
+import { useAgencyDrivers } from '@/hooks/use-drivers';
 
 type StatusKey = 'pending' | 'confirmed' | 'completed' | 'cancelled';
 
@@ -38,12 +41,17 @@ const STATUS_STYLES: Record<string, string> = {
 const AgencyAdminBookings = () => {
   const { agency } = useOutletContext<{ agency: Agency }>();
   const { data: bookings, isLoading, isError } = useAgencyBookings(agency.id);
+  const { data: drivers = [] } = useAgencyDrivers(agency.id);
   const queryClient = useQueryClient();
 
   const [chargingId, setChargingId] = useState<string | null>(null);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [selectedDay, setSelectedDay] = useState<Date | undefined>(new Date());
   const [detailBooking, setDetailBooking] = useState<any | null>(null);
+  const [addOpen, setAddOpen] = useState(false);
+  const [adding, setAdding] = useState(false);
+  const [newServiceType, setNewServiceType] = useState('transfer');
+  const { data: fleetVehicles = [] } = useAgencyVehicles(agency.id);
 
   // Filters
   const [search, setSearch] = useState('');
@@ -89,9 +97,13 @@ const AgencyAdminBookings = () => {
     const map: Record<StatusKey, Date[]> = { pending: [], confirmed: [], completed: [], cancelled: [] };
     filtered.forEach((b: any) => {
       try {
-        const days = eachDayOfInterval({ start: parseISO(b.pickup_date), end: parseISO(b.return_date) });
+        const start = parseISO(b.pickup_date);
+        const end = parseISO(b.return_date);
         const key = (b.status as StatusKey) in map ? (b.status as StatusKey) : 'pending';
-        map[key].push(...days);
+        map[key].push(start);
+        if (!isSameDay(start, end)) {
+          map[key].push(end);
+        }
       } catch {}
     });
     return map;
@@ -101,8 +113,9 @@ const AgencyAdminBookings = () => {
     if (!selectedDay) return [];
     return filtered.filter((b: any) => {
       try {
-        const days = eachDayOfInterval({ start: parseISO(b.pickup_date), end: parseISO(b.return_date) });
-        return days.some((d) => isSameDay(d, selectedDay));
+        const start = parseISO(b.pickup_date);
+        const end = parseISO(b.return_date);
+        return isSameDay(start, selectedDay) || isSameDay(end, selectedDay);
       } catch { return false; }
     });
   }, [selectedDay, filtered]);
@@ -153,6 +166,19 @@ const AgencyAdminBookings = () => {
     if (detailBooking?.id === id) setDetailBooking({ ...detailBooking, status });
   };
 
+  const updateDriver = async (id: string, driver_id: string | null) => {
+    setUpdatingId(id);
+    const { error } = await supabase.from('bookings').update({ driver_id }).eq('id', id);
+    setUpdatingId(null);
+    if (error) {
+      toast({ title: 'Update failed', description: error.message, variant: 'destructive' });
+      return;
+    }
+    toast({ title: 'Driver updated' });
+    queryClient.invalidateQueries({ queryKey: ['agency-bookings', agency.id] });
+    if (detailBooking?.id === id) setDetailBooking({ ...detailBooking, driver_id });
+  };
+
   const deleteBooking = async (id: string) => {
     if (!confirm('Delete this booking permanently?')) return;
     setUpdatingId(id);
@@ -165,6 +191,37 @@ const AgencyAdminBookings = () => {
     toast({ title: 'Booking deleted' });
     queryClient.invalidateQueries({ queryKey: ['agency-bookings', agency.id] });
     setDetailBooking(null);
+  };
+
+  const handleAddBooking = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const booking = {
+      agency_id: agency.id,
+      customer_name: formData.get('customer_name') as string,
+      customer_email: formData.get('customer_email') as string,
+      customer_phone: formData.get('customer_phone') as string,
+      service_type: formData.get('service_type') as string, vehicle_id: (formData.get('vehicle_id') as string === 'unassigned' || !formData.get('vehicle_id')) ? null : formData.get('vehicle_id') as string,
+      pickup_date: formData.get('pickup_date') as string,
+      return_date: formData.get('return_date') as string,
+      pickup_location: formData.get('pickup_location') as string,
+      return_location: formData.get('return_location') as string,
+      amount: Number(formData.get('amount') || 0),
+      status: 'confirmed',
+    };
+
+    setAdding(true);
+    const { error } = await supabase.from('bookings').insert(booking);
+    setAdding(false);
+
+    if (error) {
+      toast({ title: 'Error adding booking', description: error.message, variant: 'destructive' });
+      return;
+    }
+
+    toast({ title: 'Booking added successfully' });
+    setAddOpen(false);
+    queryClient.invalidateQueries({ queryKey: ['agency-bookings', agency.id] });
   };
 
   const exportCsv = () => {
@@ -245,9 +302,14 @@ const AgencyAdminBookings = () => {
             Manage bookings for <span className="font-medium text-foreground">{agency.name}</span>
           </p>
         </div>
-        <Button variant="outline" size="sm" onClick={exportCsv} disabled={!filtered.length} className="gap-1.5">
-          <Download className="h-3.5 w-3.5" /> Export CSV
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={() => setAddOpen(true)} className="gap-1.5">
+            Add Booking
+          </Button>
+          <Button variant="outline" size="sm" onClick={exportCsv} disabled={!filtered.length} className="gap-1.5">
+            <Download className="h-3.5 w-3.5" /> Export CSV
+          </Button>
+        </div>
       </motion.div>
 
       {/* Stats */}
@@ -465,6 +527,27 @@ const AgencyAdminBookings = () => {
                     <p className="text-xs text-muted-foreground flex items-start gap-2"><MapPin className="h-3.5 w-3.5 mt-0.5 text-destructive" /><span><strong className="text-foreground/80">Return:</strong> {detailBooking.return_location}</span></p>
                   )}
                 </section>
+                <Separator />
+
+                {/* Driver */}
+                <section className="space-y-2">
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.14em]">Assignment</p>
+                  <Select
+                    value={detailBooking.driver_id || 'unassigned'}
+                    onValueChange={(val) => updateDriver(detailBooking.id, val === 'unassigned' ? null : val)}
+                    disabled={updatingId === detailBooking.id}
+                  >
+                    <SelectTrigger className="w-full text-[13px] h-9">
+                      <SelectValue placeholder="Assign a driver" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="unassigned">Unassigned</SelectItem>
+                      {drivers.map(d => (
+                        <SelectItem key={d.id} value={d.id}>{d.full_name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </section>
 
                 <Separator />
 
@@ -528,6 +611,76 @@ const AgencyAdminBookings = () => {
           )}
         </SheetContent>
       </Sheet>
+
+      <Dialog open={addOpen} onOpenChange={setAddOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Add New Booking</DialogTitle>
+            <DialogDescription>Create a manual booking.</DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleAddBooking} className="space-y-4">
+            <div className="space-y-2">
+              <Label>Customer Name</Label>
+              <Input name="customer_name" required placeholder="John Doe" />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Service Type</Label>
+                <Select name="service_type" value={newServiceType} onValueChange={setNewServiceType}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="transfer">Transfer</SelectItem>
+                    <SelectItem value="city_tour">City Tour</SelectItem>
+                    <SelectItem value="car_rental">Car Rental</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Amount (,)</Label>
+                <Input name="amount" type="number" min="0" required defaultValue="0" />
+              </div>
+            </div>
+            {newServiceType === 'car_rental' && (
+              <div className="space-y-2">
+                <Label>Vehicle (Optional)</Label>
+                <Select name="vehicle_id">
+                  <SelectTrigger><SelectValue placeholder="Select a vehicle" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="unassigned">Unassigned</SelectItem>
+                    {fleetVehicles.map(v => (
+                      <SelectItem key={v.id} value={v.id}>{v.brand} {v.model} ({v.year})</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Pickup Date</Label>
+                <Input name="pickup_date" type="datetime-local" required />
+              </div>
+              <div className="space-y-2">
+                <Label>Return Date</Label>
+                <Input name="return_date" type="datetime-local" required />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Pickup Location</Label>
+              <Input name="pickup_location" placeholder="Airport" />
+            </div>
+            <div className="space-y-2">
+              <Label>Return Location</Label>
+              <Input name="return_location" placeholder="Hotel" />
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setAddOpen(false)}>Cancel</Button>
+              <Button type="submit" disabled={adding}>
+                {adding && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Save Booking
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
